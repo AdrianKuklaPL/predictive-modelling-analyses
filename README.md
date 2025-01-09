@@ -7,11 +7,18 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
 - **cardiovascular-disease-analysis.ipynb**:
    - Python
    - Jupyter Notebook
+- **fifa-players-analysis.R**:
+   - R
+   - RStudio
 
-## Key Findings/Results
-- Identified significant features for predicting cardiovascular disease, such as cholesterol, systolic blood pressure, and activity levels.
-- Revealed unexpected findings, including weak associations of smoking and alcohol consumption with cardiovascular disease, suggesting potential data quality issues.
-- Improved model accuracy by directly maximizing the likelihood function and addressing data outliers in features like blood pressure.
+## Analysis Performed
+- Exploratory data analysis
+- Feature engineering
+- Data cleaning and preprocessing
+- Statistical analysis and hypothesis testing
+- Predictive modeling
+- Machine learning models
+- Data visualization
 
 ## How to Replicate
 Clone the repository:
