@@ -10,6 +10,9 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
 - **fifa-players-analysis.R**:
    - R
    - RStudio
+- **statistical-analysis-of-multiple-datasets.R**:
+  - R
+  - RStudio
 
 ## Analysis Performed
 - Exploratory data analysis
