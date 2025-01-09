@@ -1,7 +1,6 @@
 ---
-title: "Clustering Analysis of iris and oliveoil datasets"
+title: "Clustering analysis of multiple datasets"
 output: word_document
-date: "2024-08-29"
 ---
 
 Recall that the aim of clustering is to determine if there are any underlying groups (or clustering structure) within a set of observations.
@@ -232,4 +231,186 @@ adjustedRandIndex(cl_scaled$cluster, oliveoil[,1])
 ```
 It also improved.
 Why 4 clusters? We can see that the South region is actually split into two clusters. This could be because of the sub-region in the South (i.e., the 'region' factor in the oliveoil data frame.)
+
+\newpage
+**Clustering exercise on ais data**
+Perform a k means clustering and a model based clustering (using mclust) in R on the AIS data (same variables as in question 1 above). Report the final forms of the clustering solutions in both cases and compare the outcomes for the two different approaches. Clustering will be covered in Lecture Videos for Week 11 parts 1 and 2 and in an additional tutorial video and lab sheet, so you should wait until viewing these before attempting this part of the assignment.
+
+First lets load in the ais data set and examine the variables and plot the variables against each other.
+```{r warning=FALSE}
+library(sn)
+data(ais)
+str(ais)
+pairs(ais[,3:13], col=as.numeric(ais[,1]), main="Groupings by Female(Black)/Male(Red)")
+```
+
+
+**K-means Clustering**
+
+Use the sum of squares to decide on the number of clusters to choose. We choose k = 1,...,10 clusters and record the within group sum of squares (which represents how tightly packed the clusters are) for each value of k. Then we plot the within group sum of squares for each number of clusters k.
+```{r}
+WGSS <- rep(0,10)
+for (k in 1:10) {
+  WGSS[k] <- sum(kmeans(ais[,3:13], centers = k)$withinss)
+}
+plot(1:10, WGSS, type="b", xlab="k", ylab="Within group sum of squares", main="K-means Clustering - Choosing K")
+```
+
+* We are looking for a 'kink' (or elbow point) in the above graph. This plot suggests k = 4 as a good clustering solution.
+* However, it is possible for the solution to be distorted if the variables are not standardized.
+* This is because standardizing is particularly important in cluster analysis because groups are defined based on the distance between points in mathematical space
+* Which may differ, if the variables aren't scaled by their standard deviation.
+* Standardization prevents variables with larger scales from dominating how clusters are defined. It allows all variables to be considered by the algorithm with equal importance
+* Since, we have no preference over which explanatory variable to use to determine clustering solution, we standardize the data set.
+
+Hence, as for question 1, we standardize the predictors and check if the results are different for the scaled version of the data. We divide each variable by its standard deviation. Use the standardized data set from Question 1.
+```{r}
+WGSS <- rep(0,10)
+for (k in 1:10) {
+  WGSS[k] <- sum(kmeans(ais.std, centers = k)$withinss)
+}
+plot(1:10, WGSS, type="b", xlab="k",ylab="Within group sum of squares")
+```
+
+* After standardizing the data set, the kink in the graph of 'within group sum of squares' is more looking like there are k = 2 clusters or k = 4 clusters, as there looks to be 2 kinks in the data set.
+* Hence, we choose k = 2 clusters according to the standardized data.
+
+Fitting a K-means clustering model with K clusters equal to 2
+```{r}
+K <- 2
+cl.kmeans <- kmeans(ais.std, center=K)
+cl.kmeans$centers #Returns the matrix of cluster centres.
+```
+
+\newpage
+**The final form of the clustering solution is below**
+```{r}
+table(cl.kmeans$cluster)
+```
+
+For data validation, we can compare the agreement between our clustering result and the true labels for both categorical variables gender and sports using the (Adj)Rand Index. We also give a table of clustering groupings for categorical variables gender and sports.
+```{r message=FALSE, warning=FALSE}
+library(e1071)
+table(cl.kmeans$cluster, ais[,1])
+table(cl.kmeans$cluster, ais[,2])
+classAgreement(table(cl.kmeans$cluster, ais[,1]))
+classAgreement(table(cl.kmeans$cluster, ais[,2]))
+```
+
+* The Rand Index is 0.92 and Adj Rand Index is 0.85, both being quite high indicating a good clustering solution for gender.
+* However, the Rand Index is 0.52 and Adj Rand Index is 0.05, both being low, so the clustering solution doesn't group well the sports labels.
+
+We also plot the graph of the data set, split by the two clusters derived from the K-means clustering model.
+```{r}
+pairs(ais.std[,c(1:2,8:11)], col=cl.kmeans$cluster, main="Splitting the data set by cluster")
+```
+
+The graph of a handful of variables shows that the two clusters are tightly grouped for majority of the variables, meaning that the clustering solution has worked well.
+
+\newpage
+**Model-based Clustering**
+
+Install the package 'mclust' if required. We load the 'mclust' package in order to perform model-based clustering.
+```{r message=FALSE, warning=FALSE}
+library(mclust)
+```
+
+Next, we fit a range of models for G = 1 to 10, where G is the number of mixture components (clusters) for which the BIC is to be calculated, accompanied by the different constrained versions of the covariance matrices, for each value of G.
+```{r}
+res <- Mclust(ais.std, G=1:10)
+#res2 <- Mclust(ais_new[,2:12], G=1:10)
+summary(res)
+#summary(res2)
+```
+
+* We find that the best model is Mclust EVE, an ellipsoidal, with equal volume and orientation with G = 5 components.
+
+Next, we check the BIC for different number of components G
+```{r}
+res$BIC
+```
+* We can see that the top 3 models have either a number of components equal to 4 or 5.
+* The top model is an ellipsoidal, equal volume and orientation and with G = 5
+* 2nd best model is an ellipsoidal, with equal orientation and with G = 5
+* 3rd best model is an ellipsoidal, equal volume and orientation and with G = 4
+
+Next, we plot the BIC for each model derived using the function 'mclust'
+```{r}
+plot(res, what="BIC",ylim=c(-2700, -2350)) #I magnified the graph so that it's easier to see which model has the highest BIC
+```
+
+**The final form of the clustering solution is an EVE, model with 5 components**
+
+\newpage
+We plot the data, along with the resulting clusters
+```{r}
+plot(res, what="classification")
+```
+
+* We can confirm from this plot that the ellipses represent shapes which are ellipsoidal and are roughly of the equal volume and orientation
+* Ellipses measure the covariance structure around the mean (centroid) of each cluster.
+* Since, ellipses are roughly the same, this means that the covariance matrix for each component is the same
+* The top model chosen using Model-based clustering performs well in grouping the observations into components, as the groups are largely  distinct. The orange component is well separated from the other components, and the blue and purple components are also well diverged, however the green component interlinkages with the other components.
+
+Next, we examine the maximum likelihood estimates of the model parameters
+```{r}
+res$parameters$pro #Gives estimates of parameters, they add up to 1. They represent the likelihood of an observation being assigned to that component
+```
+
+Gives the mean for each original variable in each component
+```{r}
+res$parameters$mean 
+```
+
+The classification of each component is as follows. First table of observations grouped by components. Next a table of the clustering solution compared to sports and gender labels.
+```{r}
+table(res$classification)
+table(res$classification,ais[,1])
+table(res$classification,ais[,2])
+```
+\newpage
+**Now, after examining both types of clustering, lets do a comparison**
+```{r}
+library(e1071)
+table <- table(cl.kmeans$cluster, res$classification)
+table
+classAgreement(table)
+```
+
+In order to interpret this table we will use the Rand Index and the Adjusted Rand Index from the function classAgreement.
+
+* The Rand Index is a summary measure of the correspondence between two cluster solutions. It is a number between 0 and 1 where 0 represents little agreement and 1 represents strong agreement.
+* The Rand Index for the cross tabulation of clusters derived from the K-means model to the components derived using a Model-based approach is roughly 0.74
+* This is a high value for the Rand Index, however it may be distorted by random allocation of observations to groups.
+* The Adjusted Rand Index take into account agreement due to change. This index can be negative but cannot be greater than 1.
+* The Adjusted Rand Index for these clusterings is roughly 0.48, which is a lot lower than the Rand Index, indicating that the two clustering solutions disagree on some observations in their allocation to a particular cluster.
+
+Next, we examine the clustering solution for both types of clustering solutions, and compare to sports and gender labels.
+```{r}
+classAgreement(table(res$classification, ais[,1]))
+classAgreement(table(cl.kmeans$cluster, ais[,1])) #Adjusted Rand Index is higher for k-means clustering than model based clustering.
+classAgreement(table(res$classification, ais[,2]))
+classAgreement(table(cl.kmeans$cluster, ais[,2])) #Adjusted Rand Index is higher for model-based clustering but only by a small amount, however, both adjusted rand indices are low and so neither clustering solution is performing well in correctly identifying sports labels.
+```
+
+Finally, we quickly compare the clustering solution of k = 4 clusters for k-means clustering, which also had a kink in the graph and compare it's performance to model based clustering.
+```{r}
+K <- 4
+cl.kmeans <- kmeans(ais.std, center=K)
+classAgreement(table(res$classification, ais[,1]))
+classAgreement(table(cl.kmeans$cluster, ais[,1])) #K-means clustering performs better as Adjusted Rand Index is smaller
+classAgreement(table(res$classification, ais[,2]))
+classAgreement(table(cl.kmeans$cluster, ais[,2])) #K-means clustering performs better as Adjusted Rand Index is smaller
+```
+
+**Conclusions**
+
+* The aim of cluster analysis is to establish if there is a group structure in the data set.
+* Model-based clustering employs statistical models and thus is a parametric technique. K-means clustering is a non-parametric technique. Hence, model-based clustering offers much more flexibility by allowing G (components) to vary, and also by varying the model parameters within each component.
+* The Adjusted Rand Index is much higher for k-means clustering with k = 2 clusters than for model based clustering for gender labels, and only slightly lower for sports labels. 
+* The Adjusted Rand Index is higher for both sports and gender labels for k-means clustering with k = 4 clusters than for model based clustering for either categorical variable.
+* Hence, We conclude that k-means clustering performs better in clustering this data set than model based clustering from the analysis done above.
+
+Final Caveat:
+There isn't enough signals in the data to help predict the sports labels in any way, k = 2 clusters conforms to gender labels, clustering solution for some sports like water polo and gym are allocated well in clustering, but can't do well to reflect the types of sports, adding on extra clusters doesn't help to predict the sport labels in a major way (rand index is a  lot higher but this is due to random chance and more clusters available, but adjusted rand index only improves by a small amount). However, there is not enough signal in the data to correctly find 10 clustering solutions for the sports. The characteristics of the players for some sports are similar and so the clustering solution doesn't seem to distinguish between some sports like Sprinting, Basketball and Swimming, but it does distinguish between other sports like water polo, netball and gym. Because of this weak signalling in the data, the clustering solution doesn't pick up on all types of sports labels in the data set. This is because the characteristics aren't too dissimilar for the different sports and so the clustering solution doesn't pick up on these groupings.
 
