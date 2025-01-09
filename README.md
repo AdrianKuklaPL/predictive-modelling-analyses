@@ -13,6 +13,6 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
 - Improved model accuracy by directly maximizing the likelihood function and addressing data outliers in features like blood pressure.
 
 ## How to Replicate
-1. Clone the repository:
+Clone the repository:
    ```bash
-   git clone https://github.com/AdrianKuklaPL/ad-hoc-predictive-modelling.git
+   git clone https://github.com/AdrianKuklaPL/predictive-modelling-analyses.git
