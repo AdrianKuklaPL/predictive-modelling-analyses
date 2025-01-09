@@ -1,0 +1,192 @@
+---
+title: "Principal Component Analysis"
+output: word_document
+---
+
+# Introduction
+
+This analysis demonstrates how to perform Principal Component Analysis (PCA) on the Iris dataset using R. PCA is a technique used to reduce the dimensionality of a dataset while retaining as much variability as possible. We will also explore the concepts of covariance matrices, eigenvalues, eigenvectors, and orthogonality in the context of PCA.
+
+## What is PCA?
+
+Principal Component Analysis (PCA) transforms the original variables into a new set of uncorrelated variables called principal components (PCs). Each PC captures a certain amount of the total variance in the data. The first PC captures the most variance, followed by the second, and so on. PCA is used primarily for dimensionality reduction but can also be used for data visualization, and identifying patterns in high-dimensional data.
+
+## Covariance Matrix, Eigenvalues, and Eigenvectors
+
+PCA is based on the covariance matrix, which shows how variables vary together. Eigenvalues and eigenvectors are essential components of PCA. Eigenvalues represent the amount of variance explained by each PC, while eigenvectors define the direction of the PCs. Orthogonality ensures that PCs are uncorrelated, allowing each PC to capture unique information about the data.
+
+Eigenvectors are directions along which a transformation (like scaling or rotating a matrix) acts by stretching or compressing the data.
+Eigenvalues are the factors by which the data is stretched or compressed along these eigenvector directions.
+Example: imagine you have a flat piece of rubber (your data) that you're pulling in a particular direction. The direction in which you pull is the eigenvector, and how much the rubber stretches is the eigenvalue.
+
+Eigenvalues and eigenvectors come from the equation:
+Av=λv
+Where:
+A is a square matrix (representing a transformation like rotation or scaling),
+v is an eigenvector (a direction),
+λ is an eigenvalue (a scaling factor along the direction of the eigenvector),
+The equation says: "Transforming v by matrix A only scales it by λ" — the direction doesn’t change.
+
+Eigenvalues and eigenvectors give us a way to understand the underlying structure of a matrix. In the context of PCA, they tell us the principal directions in which our data varies the most (eigenvectors) and how significant each direction is (eigenvalues).
+
+Eigenvalues are found by solving the characteristic equation:det(A−λI)=0
+The determinant measures how a matrix scales the volume of space it acts on. This notion of "scaling the space" requires the matrix to act within the same dimension (hence it must be square).
+
+(A−λI) is singular if A−λI does not have full rank, and the matrix is not invertible.
+A matrix is singular (i.e., not invertible) if and only if its determinant is zero. The determinant is a measure of whether a matrix can squish the space down to a lower dimension - flatten or collapse it in some direction.
+
+In higher dimensions (like 3D), the determinant measures how the matrix 'A' affects the volume of the space:
+Determinant > 1: The matrix stretches the volume, making it larger.
+Determinant between 0 and 1: The matrix shrinks the volume.
+Determinant = 0: The matrix flattens the space into a lower dimension (e.g., turning a cube into a flat sheet).
+Negative determinant: The matrix flips the space, reversing its orientation.
+
+By setting the determinant to zero, we are ensuring that (A−λI) doesn't have an inverse, which is a requirement for there to be non-trivial solutions (i.e., meaningful eigenvectors). If the determinant were non-zero, then v would have to be zero, which is not what we want for eigenvectors.
+
+# Positive and semi-positive matrices
+A matrix A is positive definite if, for any non-zero vector x, the quadratic form (x^t)Ax is always positive.
+Intuitively, this means that the matrix always produces positive lengths when applied to any vector. This indicates that the transformation defined by A always stretches and never compresses the data too much.
+
+A matrix A is positive semidefinite if, for any vector x, the quadratic form (x^T)Ax is non-negative (i.e., it can be zero or positive).
+This means that some directions may not experience any stretching (eigenvalue = 0), but no direction experiences a "negative stretch."
+A positive semidefinite matrix can be thought of as a transformation that stretches in some directions but could leave others unchanged. In PCA, a zero eigenvalue means no variation in the corresponding direction.
+
+Covariance matrices (which summarize how different variables vary together) are always positive semidefinite. This ensures that the variance along any principal component is never negative.
+
+# PCA on the Iris Dataset
+
+We begin by performing PCA on the Iris dataset, which consists of measurements of sepal length, sepal width, petal length, and petal width for three species of iris flowers.
+
+```{r}
+# Load the Iris dataset
+data(iris)
+
+# Perform PCA on the first four columns (sepal and petal measurements)
+fit <- prcomp(iris[, 1:4], scale. = TRUE)
+
+# Print PCA results
+fit
+```
+
+The output shows the principal components and their associated standard deviations. Each standard deviation corresponds to the square root of an eigenvalue, and each PC is an eigenvector.
+Standard deviations: The values [1.7083611 0.9560494 0.3830886 0.1439265] represent the square roots of the eigenvalues, indicating how much variance each principal component captures. PC1 explains the most variance (largest standard deviation), followed by PC2, PC3, and PC4.
+Rotation matrix: Each number in the matrix represents the loading of a variable on a principal component. For example, the value 0.521 under PC1 for Sepal.Length indicates that Sepal.Length contributes positively to the first principal component. A higher absolute value means a stronger influence on that component.
+
+Summary of PCA Results
+The summary() function provides a concise summary of the PCA results, showing the standard deviations of the PCs, the proportion of variance explained by each PC, and the cumulative proportion of variance.
+
+```{r}
+# Summary of PCA
+summary(fit)
+```
+
+The proportion of variance explained by each PC aids in determining how many PCs to retain. We generally choose the PCs that explain most of the variance.
+
+Eigenvectors (Loadings)
+The rotation matrix contains the eigenvectors (variable loadings) for each PC. These loadings indicate how much each original variable contributes to the PCs.
+
+```{r}
+# Round the eigenvectors (variable loadings on each PC) to 2 decimal places
+round(fit$rotation, 2)
+```
+
+Plotting the Explained Variance
+We can visually assess how many PCs to retain by plotting the proportion of variance explained by each PC.
+
+```{r}
+# Plot the proportion of variance explained by each PC
+plot(fit)
+```
+
+Predicting Principal Component Scores
+The predict() function is used to calculate the principal component scores for each observation in the dataset. These scores represent each observation in the space of the principal components.
+
+```{r}
+# Get the principal components for each observation
+pc_data <- predict(fit)
+pc_data
+```
+
+Each flower now has new values (PC scores) for each PC, similar to how each flower has sepal and petal measurements.
+
+```{r}
+# Perform PCA on the iris dataset (excluding the species column)
+pca_fit <- prcomp(iris[, 1:4], scale. = TRUE)
+
+# Predict the principal components for the data (i.e., calculate the PCs)
+pcs <- predict(pca_fit)
+
+# Extract the rotation matrix (eigenvectors) from the PCA result
+rotation_matrix <- pca_fit$rotation
+
+# Reconstruct the original data (centered and scaled) from the PCs
+reconstructed_data <- pcs %*% t(rotation_matrix)
+
+# Since the original data was centered and scaled, we need to undo the scaling
+# and centering to get back to the original variable values.
+
+# Get the mean and standard deviation of the original data
+data_means <- colMeans(iris[, 1:4])
+data_sds <- apply(iris[, 1:4], 2, sd)
+
+# Undo the scaling
+reconstructed_data <- sweep(reconstructed_data, 2, data_sds, "*")
+
+# Undo the centering (add back the original means)
+reconstructed_data <- sweep(reconstructed_data, 2, data_means, "+")
+
+# Now reconstructed_data contains the original variables based on the PCs
+head(reconstructed_data)
+```
+
+Visualizing the First Two Principal Components
+We can visualize the data in the space of the first two principal components by plotting PC1 against PC2. We also color-code the data points by species.
+
+```{r}
+# Predict the principal components for each observation (each flower)
+newiris <- predict(fit)
+
+# Plot PC1 against PC2 and label the points by species
+plot(newiris[, 1], newiris[, 2], type = "n", xlab = "PC1", ylab = "PC2")
+
+# Add text labels for species names and color them by species
+text(newiris[, 1], newiris[, 2], labels = substr(iris[, 5], 1, 2), col = as.integer(iris[, 5]))
+```
+This scatter plot shows how the Iris species are distributed in the space of the first two principal components.
+
+
+Perform PCA and fit a linear model using PC1 and use the rotation matrix to express PC1 as a linear combination of the original variables.
+```{r}
+# Load the iris dataset
+data(iris)
+
+# Perform PCA on the first four columns (sepal and petal measurements)
+pca_fit <- prcomp(iris[, 1:4], scale. = TRUE)
+
+# Get the principal component scores (PCs)
+pcs <- predict(pca_fit)
+
+# Fit a linear model using only PC1 to predict the species (as a numeric value, just for example)
+y <- as.numeric(iris$Species)
+model <- lm(y ~ pcs[, 1])  # Fit model with PC1
+
+# Check the model summary
+summary(model)
+
+```
+
+```{r}
+# Extract the rotation matrix (loadings)
+rotation_matrix <- pca_fit$rotation
+
+# Use the first principal component (PC1) loadings
+pc1_loadings <- rotation_matrix[, 1]
+
+# Example: using new data (here, the first row of the iris dataset as an example)
+new_data <- iris[1, 1:4]  # Get the original variables of a new observation
+
+# Calculate PC1 for the new observation using the loadings from the rotation matrix
+pc1_value <- sum(new_data * pc1_loadings)
+pc1_value
+```
+
