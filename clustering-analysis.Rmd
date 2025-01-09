@@ -1,0 +1,235 @@
+---
+title: "Clustering Analysis of iris and oliveoil datasets"
+output: word_document
+date: "2024-08-29"
+---
+
+Recall that the aim of clustering is to determine if there are any underlying groups (or clustering structure) within a set of observations.
+
+```{r}
+data(iris)
+head(iris)
+```
+
+HIERARCHICAL CLUSTERING
+
+Hierarchical clustering is always a good exploratory tool as an initial analysis so that we can get an idea of the clustering structure (if any) that
+exists within the data. For this algorithm we don't have to specify the number of clusters, but a dendrogram can help us visualize what's happening.
+
+Modelling steps:
+1 Compute Dissimilarity Matrix: Calculate the pairwise dissimilarities (e.g., Euclidean distance) between all data points.
+2 Merge or Split: Depending on the method (agglomerative or divisive), merge or split clusters based on a linkage criterion (e.g., single, complete, average).
+3 Build Dendrogram: Create a tree-like structure (dendrogram) that shows the order in which clusters are merged or split.
+4 Output: A dendrogram that can be cut at a chosen level to form clusters.
+
+Now let’s calculate the dissimilarity matrix of the first five flowers using a Euclidean dissimilarity measure. 
+To do so we can only use the first four columns of the data which contain the numerical petal and sepal measurements.
+(The fifth column contains the species type).
+
+A dissimilarity matrix in R is a matrix that quantifies the difference between pairs of objects (like data points, vectors, or observations). Each element in the matrix represents the dissimilarity or distance between a pair of objects. It’s a crucial concept in clustering, classification, and other machine learning tasks where the relationship between objects needs to be analyzed.
+
+```{r}
+x <- iris[1:5,1:4]
+dist.eucl <- dist(x, method="euclidean")
+dist.eucl.matrix <- as.matrix(dist.eucl)
+round(dist.eucl,2)
+round(dist.eucl.matrix,2)
+```
+The dissimilarity matrix is used to determine the proximity of objects to each other.
+This code snippet generates a dissimilarity matrix for the first four columns of the Iris dataset, excluding the species column, and computes the Euclidean distances between all pairs of observations. 
+The diagonal elements are always 0 because the dissimilarity (or distance) of any observation with itself is zero.
+Each off-diagonal element represents the Euclidean distance between a pair of observations. For example:
+The distance between observation 1 and 4 is 0.65 meaning that they are quite dissimilar.
+The distance between observation 1 and 5 is 0.14 meaning that they are close in terms of the values of their covariates.
+We can check this by looking at the observations in the iris data set.
+
+The method=“euclidean” argument specifies that the Euclidean distance should be used.
+The help file for the dist command lists the other dissimilarity measures available. Can use Manhattan, Maximum, Minkowski.
+Once we have a dissimilarity matrix we can then perform cluster analysis using a hierarchical clustering algorithm.
+
+```{r include=FALSE}
+# install.packages("pdfCluster")
+library(pdfCluster)
+```
+
+Now we will use the olive oil data set that we have seen before to demonstrate the hierarchical clustering. Load the olive oil data into R.
+The data set contains 572 olive oil samples. The percentage composition of 8 fatty acids in the sample along with
+the region of origin and the specific area of origin were recorded on each oil.
+
+We will perform an unsupervised learning algorithm.
+Assume for the moment that the region of origin of each oil is unknown and all we have is the numeric data associated with the fatty acids. 
+Construct a new matrix which consists of the numeric part of the olive oil data only:
+
+```{r}
+data("oliveoil")
+str(oliveoil)
+acids <- oliveoil[,3:10]
+pairs(oliveoil[,3:10], col=as.numeric(oliveoil[,1]))
+```
+
+Now we construct a dissimilarity matrix for the fatty acid data. The function to perform hierarchical clustering in
+R is the function called hclust. 
+We specify the distance below and the linkage method.
+
+In hierarchical clustering, the linkage measure is an argument that determines how the distance between clusters is calculated during the process of merging or splitting clusters. It plays an important role in defining the shape and structure of clusters. Suggest Googling for different types and what they mean.
+
+Note that if a particular method is not specified in the dist function, the default dissimilarity measure used is the Euclidean distance.
+
+```{r}
+cl.single <- hclust(dist(acids), method="single")
+plot(cl.single)
+
+```
+
+```{r}
+cl.complete <- hclust(dist(acids), method="complete")
+plot(cl.complete)
+```
+
+```{r}
+cl.average <- hclust(dist(acids), method="average")
+plot(cl.average)
+```
+
+Cutting the dendrogram horizontally at a particular height partitions the data into disjoint clusters, represented by the vertical lines which intersect the horizontal divisor.
+To cut the dendrogram we use the function called cutree. We specify the number of clusters to cut the dendrogram to be 3.
+
+```{r}
+hcl <- cutree(cl.average, k = 4)
+# hcl <- cutree(cl.average, h = 600)
+hcl
+table(hcl)
+```
+The function returns a vector hcl where each element corresponds to a data point, and the value of each element indicates the cluster to which that data point has been assigned (1, 2, or 3 in this case).
+
+Good idea to standardize the raw data prior to calculating the dissimilarity matrix as the variable with the greatest variance (spread from mean)
+will have the most impact in creating the clusters.
+
+The scale function standardizes each column of the selected data. It subtracts the mean of each variable and divides by its standard deviation.
+```{r}
+acids_scaled <- scale(acids)
+head(acids_scaled)
+```
+Perform clustering again after standardizing the data set.
+
+```{r}
+cl.average.std <- hclust(dist(acids_scaled), method="average")
+plot(cl.average.std)
+hcl.std <- cutree(cl.average.std, k = 3)
+hcl.std
+table(hcl.std)
+```
+\newpage
+
+K-means is a partitioning method where the data is divided into k clusters, with k being a parameter you set before running the algorithm.
+Modelling steps:
+1. Select randomly a parameter for k initial centroids.
+2. Allocating each data point is assigned to the nearest centroid based on a distance measure (usually Euclidean).
+3. The centroids are recalculated as the mean of all data points in each cluster.
+4. Iterate by applying Steps 2 and 3 until the centroids no longer change significantly or the maximum number of iterations is reached.
+5. Output: A set of k clusters, each defined by its centroid.
+
+
+A feature of the K-means clustering algorithm is how tightly packed the clusters are, i.e. we are interested in the within cluster sum of squares.
+Therefore we will use this as the basis to decide the number of clusters we choose.
+We are going to run the k-means clustering algorithm over the range k = 1, ..., 10 clusters and record the within group sum of squares (WGSS) for each value of k. 
+
+Initiliaze a vector WGSS first.
+```{r}
+WGSS <- rep(0,10)
+for(k in 1:10){
+WGSS[k] <- sum(kmeans(acids, centers = k)$withinss)
+}
+WGSS
+```
+
+$withinss extracts the Within-Group Sum of Squares for each cluster from the K-means model. 
+withinss is a vector that contains the sum of squared distances from each point to its assigned cluster centroid for all clusters.
+
+```{r}
+plot(1:10, WGSS, type="b", xlab="k", ylab="Within group sum of squares")
+```
+
+Elbow Method -> We are looking for an elbow point in the above graph. Why? Because we want to find the point where the decrease in in WGSS becomes
+smaller (i.e., at the "elbow"). This "elbow" point suggests the optimal number of clusters to use, as adding more clusters beyond this point doesn’t significantly improve the clustering.
+From the above graph seems like 3 clusters is a potential clustering solution.
+
+```{r}
+K <- 3
+cl <- kmeans(acids, center=K)
+table(cl$cluster)
+```
+
+We know what the actual origin of each oil is so we can compare the results.
+
+```{r}
+table(cl$cluster, oliveoil[,1])
+```
+
+We can compare the agreement between our clustering results and the true labels using the Rand Index. 
+The Rand Index is a measure used to evaluate the quality of clustering results by comparing the clustering outcome with actual labels. 
+It provides a way to quantify how well the clustering matches the true labels of the data, if they are known.
+It compares the pairwise agreements and disagreements between the clusterings.
+Rand Index takes value between 0 and 1. The higher the index the better the clustering quality with respect to the actual factor levels.
+
+Can use classAgreement function from e1071 library to calculate the Rand index. 
+
+```{r}
+# install.packages("e1071")
+library(e1071)
+classAgreement(table(cl$cluster, oliveoil[,1]))
+```
+Can also calculate the adjusted Rand index using the mclust library. The adjusted Rand index allows for chance grouping of data points 
+(i.e., randomness, the potential for observations to be assigned into the correct cluster, but via random chance, rather than because of good model fit.)
+
+```{r}
+# install.packages("mclust")
+library(mclust)
+adjustedRandIndex(cl$cluster, oliveoil[,1])
+```
+
+The adjusted rand index is quite low for our k-means clustering result, suggesting that the clusters we found are not ideal. 
+
+
+Try the k-means algorithm on the scaled version of the olive oil data and see whether the clustering result can be improved.
+```{r}
+WGSS_scaled <- rep(0,10)
+for(k in 1:10){
+WGSS_scaled[k] <- sum(kmeans(acids_scaled, centers = k)$withinss)
+}
+WGSS_scaled
+```
+
+```{r}
+plot(1:10, WGSS_scaled, type="b", xlab="k", ylab="Within group sum of squares")
+```
+
+```{r}
+K <- 4
+cl_scaled <- kmeans(acids_scaled, center=K)
+table(cl_scaled$cluster)
+```
+
+```{r}
+table(cl_scaled$cluster, oliveoil[,1])
+```
+
+```{r}
+classAgreement(table(cl$cluster, oliveoil[,1]))
+```
+
+```{r}
+classAgreement(table(cl_scaled$cluster, oliveoil[,1]))
+```
+Looks like the Rand index improved after scaling. However, let's check the the adjusted Rand index too.
+
+```{r}
+adjustedRandIndex(cl$cluster, oliveoil[,1])
+```
+
+```{r}
+adjustedRandIndex(cl_scaled$cluster, oliveoil[,1])
+```
+It also improved.
+Why 4 clusters? We can see that the South region is actually split into two clusters. This could be because of the sub-region in the South (i.e., the 'region' factor in the oliveoil data frame.)
+
