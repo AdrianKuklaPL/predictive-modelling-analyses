@@ -4,8 +4,9 @@
 This repository contains ad-hoc analyses on various datasets in the domain of predictive modelling. The goal is to explore and apply predictive modelling techniques to uncover insights.
 
 ## Technologies Used
-- Python
-- Jupyter Notebook
+- **cardiovascular-disease-analysis.ipynb**:
+   - Python
+   - Jupyter Notebook
 
 ## Key Findings/Results
 - Identified significant features for predicting cardiovascular disease, such as cholesterol, systolic blood pressure, and activity levels.
