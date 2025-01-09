@@ -13,6 +13,8 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
    - R & RStudio
 - **clustering-analysis.Rmd**:
    - R Markdown
+- **principal-component-analysis.Rmd**:
+   - R Markdown
 
 ## Analysis Performed
 - Exploratory data analysis
