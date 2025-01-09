@@ -5,14 +5,12 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
 
 ## Technologies Used
 - **cardiovascular-disease-analysis.ipynb**:
-   - Python
-   - Jupyter Notebook
+   - Python & Jupyter Notebook
+   - VS Code
 - **fifa-players-analysis.R**:
-   - R
-   - RStudio
+   - R & RStudio
 - **statistical-analysis-of-multiple-datasets.R**:
-  - R
-  - RStudio
+  - R & RStudio
 
 ## Analysis Performed
 - Exploratory data analysis
