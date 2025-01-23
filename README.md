@@ -8,6 +8,7 @@ This repository contains ad-hoc analyses on various datasets in the domain of pr
    - Python & Jupyter Notebook
    - VS Code
 - **fifa-players-analysis.R**
+   - R & RStudio
 - **statistical-analysis-of-multiple-datasets.R**
    - R & RStudio
 - **clustering-analysis.Rmd**
