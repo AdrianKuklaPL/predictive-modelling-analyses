@@ -4,16 +4,15 @@
 This repository contains ad-hoc analyses on various datasets in the domain of predictive modelling. The goal is to explore and apply predictive modelling techniques to uncover insights.
 
 ## Technologies Used
-- **cardiovascular-disease-analysis.ipynb**:
+- **cardiovascular-disease-analysis.ipynb**
    - Python & Jupyter Notebook
    - VS Code
-- **fifa-players-analysis.R**:
+- **fifa-players-analysis.R**
+- **statistical-analysis-of-multiple-datasets.R**
    - R & RStudio
-- **statistical-analysis-of-multiple-datasets.R**:
-   - R & RStudio
-- **clustering-analysis.Rmd**:
+- **clustering-analysis.Rmd**
    - R Markdown
-- **principal-component-analysis.Rmd**:
+- **principal-component-analysis.Rmd**
    - R Markdown
 
 ## Analysis Performed
